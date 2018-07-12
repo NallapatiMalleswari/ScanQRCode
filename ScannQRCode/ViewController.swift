@@ -15,16 +15,19 @@ class ViewController: UIViewController {
     }
     
     override func viewDidAppear(_ animated: Bool) {
-        let scanner = QRcodeScannerController(cameraImage: UIImage(named: "camera"), cancelImage: UIImage(named: "cancel"), flashOnImage: UIImage(named: "flash-on"), flashOffImage: UIImage(named:"flash-off"), galleryImage: UIImage(named:"gallery"), iphoneIcon: UIImage(named: "PhoneIcon"), qrcodeIcon: UIImage(named: "QRCodeImage"))
-        scanner.delegate = self
-        self.present(scanner, animated: true, completion: nil)
+       
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
+    @IBAction func startScanQRcodeButtonAction(_ sender: UIButton) {
+        let scanner = QRcodeScannerController(cameraImage: UIImage(named: "camera"), cancelImage: UIImage(named: "cancel"), flashOnImage: UIImage(named: "flash-on"), flashOffImage: UIImage(named:"flash-off"), galleryImage: UIImage(named:"gallery"), iphoneIcon: UIImage(named: "PhoneIcon"), qrcodeIcon: UIImage(named: "QRCodeImage"))
+        scanner.delegate = self
+        self.present(scanner, animated: true, completion: nil)
+    }
+    
 
 }
 
