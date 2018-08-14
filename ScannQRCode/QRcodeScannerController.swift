@@ -1,3 +1,6 @@
+
+
+
 //
 //  ScannQR.swift
 //  ScannQRCode
@@ -15,6 +18,7 @@ public protocol QRScannerDelegate:class {
     func qrScannerDidFail(_ controller: UIViewController,  error: String)
     func qrScannerDidCancel(_ controller: UIViewController)
     func qrScannerFromGalley(_controller: UIViewController,scanDidcomplete result: String)
+    func qrCodeFromTextField(_controller: UIViewController,scanDidcomplete result: String)
 }
 
 class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDelegate{
@@ -22,7 +26,7 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
     var squareView:SquareView?
     let movingView = UIView()
     var imagePicker = UIImagePickerController()
-
+    
     
     public weak var delegate:QRScannerDelegate?
     
@@ -36,12 +40,20 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
     public var qrcodeIcon:UIImage?
     
     //Default Properties
-    let topSpace: CGFloat = 60.0
+    let topSpace: CGFloat = 44.0
     let spaceFactor: CGFloat = 16.0
     var devicePosition: AVCaptureDevice.Position = .back
     var delCnt: Int = 0
+    
     var flashButton: UIButton = UIButton()
-
+    var qrCodeTextField = UITextField()
+    var arrowButton = UIButton()
+    var orLabel = UILabel()
+    let cancelButton = UIButton()
+    let lineView = UIView()
+    let galleryButton = UIButton()
+    var phoneImageView = UIImageView()
+    var qrCodeImageView = UIImageView()
     
     ///This is for adding delay so user will get sufficient time for align QR within frame
     let delayCount = 15
@@ -67,25 +79,38 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
         fatalError("init(coder:) has not been implemented")
     }
     
+    var isViewDidload:Bool = true
     
     override public func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         imagePicker.delegate = self
-        //Currently only "Portraint" mode is supported
+        qrCodeTextField.delegate = self
+        
+        
         UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
         delCnt = 0
         prepareQRScannerView(self.view)
         startScanningQRCode()
-        movingView.backgroundColor = UIColor.blue //UIColor(red: 46, green: 101, blue: 189, alpha: 1)
+        
+        movingView.backgroundColor = UIColor.blue
         view.addSubview(movingView)
+        
     }
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(true)
-        qrCodeScanningIndicator()
+    
+    override public func viewDidLoad() {
+        super.viewDidLoad()
+        
+    }
+    
+    func prepareQRScannerView(_ view: UIView) {
+        setupCaptureSession(devicePosition)
+        addViedoPreviewLayer(view)
+        addButtons(view)
+        createCornerFrame()
     }
     
     //capture device
-     var defaultDevice: AVCaptureDevice? = {
+    var defaultDevice: AVCaptureDevice? = {
         if let device = AVCaptureDevice.default(for: .video){
             return device
         }
@@ -118,7 +143,7 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
                 print("ERROR: \(error)")
             }
         }
-      return nil
+        return nil
     }()
     
     ///Initialise AVCaptureInput with frontDevice
@@ -146,43 +171,102 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
         return layer
     }()
     
-    /// This calls up methods which makes code ready for scan codes.
-    /// - parameter view: UIView in which you want to add scanner.
     
-    func prepareQRScannerView(_ view: UIView) {
-        setupCaptureSession(devicePosition) //Default device capture position is rear
-        addViedoPreviewLayer(view)
-        createCornerFrame()
-        addButtons(view)
-    }
     
-    ///Creates corner rectagle frame with black color(default color)
-   
-    func createCornerFrame() {
-       
-        let width: CGFloat =  self.view.bounds.width
-        let height: CGFloat = self.view.bounds.height
+    
+    /// Adds buttons to view which can we used as extra fearures
+    private func addButtons(_ view: UIView) {
+        let height: CGFloat = 44.0
+        let width: CGFloat = 44.0
         
-        let rect = CGRect.init(origin: CGPoint.init(x: self.view.frame.midX - width/2.5 , y: (self.view.frame.midY - height / 5)), size: CGSize.init(width: width * 0.8, height: width * 0.8))
-       
-        print("View Frame : \(rect), \(self.view.frame.minY), \(width), \(height)")
+        var galleryButtonFrame: CGRect!
+        var flashButtonFrame: CGRect!
         
-        let squareFrameRect = CGRect(x: self.view.frame.midX - width/2.7 , y: self.view.frame.midY - (height/5.5), width: width - 100, height: width - 100)
-        print("squareFrameRect\(squareFrameRect)")
-        squareView = SquareView(frame: squareFrameRect)
-        if let squareView = squareView {
-            self.view.backgroundColor = UIColor(white: 0.0, alpha: 0.5)
-            squareView.autoresizingMask = UIViewAutoresizing(rawValue: UInt(0.0))
-            self.view.addSubview(squareView)
-            
-            addMaskLayerToVideoPreviewLayerAndAddText(rect: rect)
+        //Torch button
+        if UIDevice().userInterfaceIdiom == .phone{
+            switch UIScreen.main.nativeBounds.height{
+            case 2436:
+                print("iphoneX")
+                flashButtonFrame = CGRect(x: 16, y: UIApplication.shared.statusBarFrame.height, width: width, height: height)
+                galleryButtonFrame = CGRect(x: view.frame.width - (width+16), y: UIApplication.shared.statusBarFrame.height, width: width, height: height)
+            default:
+                print("unknown")
+                let y = UIApplication.shared.statusBarFrame.height+10
+                flashButtonFrame = CGRect(x: 16, y: y, width: width, height: height)
+                galleryButtonFrame = CGRect(x: view.frame.width - (width+16), y: y, width: width, height: height)
+            }
         }
+        
+        flashButton.frame = flashButtonFrame
+        flashButton.tintColor = UIColor.white
+        flashButton.layer.cornerRadius = height/2
+        //flashButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        flashButton.contentMode = .scaleAspectFit
+        flashButton.addTarget(self, action: #selector(toggleTorch), for: .touchUpInside)
+        if let flashOffImg = flashOffImage {
+            flashButton.setImage(flashOffImg, for: .normal)
+            view.addSubview(flashButton)
+        }
+        
+        //QR code textfield
+        qrCodeTextField.frame = CGRect(x: self.view.frame.midX - (self.view.frame.width/3), y: flashButton.bottom + 20, width: (self.view.bounds.width/3) * 2, height: self.view.frame.height * 0.05)
+        qrCodeTextField.backgroundColor = UIColor.clear
+        qrCodeTextField.textColor = .white
+        qrCodeTextField.textAlignment = .center
+        view.addSubview(qrCodeTextField)
+        qrCodeTextField.attributedPlaceholder = NSAttributedString(string: "Enter QR code",
+                                                                   attributes: [NSAttributedStringKey.foregroundColor: UIColor.white])
+        qrCodeTextField.returnKeyType = UIReturnKeyType.done
+        
+        
+        arrowButton.frame = CGRect(x: qrCodeTextField.width+30, y: flashButton.bottom + 20, width: self.view.bounds.width/6, height: self.view.frame.height * 0.05)
+        arrowButton.backgroundColor = UIColor.clear
+        arrowButton.setImage(#imageLiteral(resourceName: "rightArrow"), for: .normal)
+        view.addSubview(arrowButton)
+        arrowButton.addTarget(self, action: #selector(VelidateQRcode), for: UIControlEvents.touchUpInside)
+        
+        
+        
+        lineView.frame = CGRect(x: qrCodeTextField.x, y: qrCodeTextField.bottom, width: qrCodeTextField.width, height: 1)
+        lineView.backgroundColor = .white
+        view.addSubview(lineView)
+        
+        
+        orLabel.frame = CGRect(x: self.view.center.x - 15, y: lineView.bottom, width: self.view.bounds.width/6, height: self.view.frame.height * 0.05)
+        self.view.addSubview(orLabel)
+        orLabel.text = "Or"
+        orLabel.textColor = UIColor.white
+        
+        //QRCode image
+        let imageWidth = self.view.frame.width * 0.14
+        qrCodeImageView.frame = CGRect(origin: CGPoint(x: self.view.frame.midX - (self.view.frame.width/11), y: orLabel.bottom+15), size: CGSize(width: imageWidth, height: imageWidth))
+        qrCodeImageView.image = qrcodeIcon
+        view.addSubview(qrCodeImageView)
+        qrCodeImageView.contentMode = .center
+        
+        
+        //GallaryImageButton
+        
+        galleryButton.frame = galleryButtonFrame
+        galleryButton.setImage(galleryImage, for: .normal)
+        
+        galleryButton.contentMode = .scaleAspectFit
+        galleryButton.addTarget(self, action: #selector(presentGalley), for: .touchUpInside)
+        view.addSubview(galleryButton)
+        
+        
+        //iphone Image
+        phoneImageView.image = #imageLiteral(resourceName: "PhoneIcon")
+        phoneImageView.frame = CGRect.init(origin: CGPoint(x: self.view.frame.midX - (self.view.frame.width/3), y: (orLabel.bottom)), size: CGSize(width: (self.view.frame.width * 0.16), height: (self.view.frame.height * 0.14)))
+        view.addSubview(phoneImageView)
+        
+        UIView.animate(withDuration: 1, delay: 0.5, options: [.autoreverse,.repeat], animations: {
+            self.phoneImageView.frame = CGRect.init(origin: CGPoint(x: self.view.frame.midX - (self.view.frame.width/10), y: (self.orLabel.bottom)), size: CGSize(width: self.view.frame.width * 0.16, height: self.view.frame.height * 0.14))
+        }, completion: nil)
     }
-    
-    
-    
+    let maskLayer = CAShapeLayer()
     func addMaskLayerToVideoPreviewLayerAndAddText(rect: CGRect) {
-        let maskLayer = CAShapeLayer()
+        
         maskLayer.frame = view.bounds
         maskLayer.fillColor = UIColor(white: 0.0, alpha: 0.5).cgColor
         let path = UIBezierPath(rect: rect)
@@ -197,96 +281,60 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
         noteText.string = "Scan the QR code printed\n inside the ring case"
         noteText.alignmentMode = kCAAlignmentCenter
         noteText.contentsScale = UIScreen.main.scale
-        noteText.frame = CGRect(x: spaceFactor, y: rect.origin.y + rect.size.height + 30, width: view.frame.size.width - (2.0 * spaceFactor), height: 50)
+        noteText.frame = CGRect(x: spaceFactor, y: phoneImageView.bottom+15, width: view.frame.size.width - (2.0 * spaceFactor), height: 50)
         noteText.foregroundColor = UIColor.white.cgColor
         view.layer.insertSublayer(noteText, above: maskLayer)
         
-        
-        
     }
     
+    ///Creates corner rectagle frame with black color(default color)
     
-    
-    /// Adds buttons to view which can we used as extra fearures
-    private func addButtons(_ view: UIView) {
-        let height: CGFloat = 44.0
-        let width: CGFloat = 44.0
-        let btnWidthWhenCancelImageNil: CGFloat = 60.0
-        let btnWidthWhenGalleyImageNil: CGFloat = 60.0
+    func createCornerFrame() {
+        
+        let width: CGFloat =  self.view.bounds.width
+        
+        
+        let rect = CGRect.init(origin: CGPoint.init(x: self.view.frame.midX - width/2.8, y: (phoneImageView.bottom+70)), size: CGSize.init(width: width * 0.7, height: width * 0.7))
+        
+        let squareFrameRect = CGRect(x: rect.origin.x+10, y: rect.origin.y+10, width: rect.width - 20, height: rect.height - 20)
+        squareView = SquareView(frame: squareFrameRect)
+        if let squareView = squareView {
+            self.view.backgroundColor = UIColor(white: 0.0, alpha: 0.5)
+            squareView.autoresizingMask = UIViewAutoresizing(rawValue: UInt(0.0))
+            self.view.addSubview(squareView)
+            qrCodeScanningIndicator(rect: rect)
+            addMaskLayerToVideoPreviewLayerAndAddText(rect: rect)
+        }
+        
         
         //Cancel button
-        let cancelButton = UIButton()
-        if let cancelImg = cancelImage {
-            cancelButton.frame = CGRect(x: view.frame.width/2 - width/2, y: view.frame.height - height, width: width, height: height)
-            cancelButton.setImage(cancelImg, for: .normal)
-        } else {
-            cancelButton.frame = CGRect(x: view.frame.width/2 - btnWidthWhenCancelImageNil/2, y: view.frame.height - height, width: btnWidthWhenCancelImageNil, height: height)
-            cancelButton.setTitle("Cancel", for: .normal)
+        var cancelButtonFrame: CGRect!
+        
+        if UIDevice().userInterfaceIdiom == .phone{
+            switch UIScreen.main.nativeBounds.height{
+            case 2436:
+                print("iphoneX")
+                cancelButtonFrame = CGRect(x: rect.origin.x, y: rect.origin.y+rect.height+40 , width: rect.width, height: 40)
+            default:
+                print("unknown")
+                cancelButtonFrame = CGRect(x:rect.origin.x, y: rect.origin.y+rect.height+10, width: rect.width, height: 40)
+            }
         }
+        
+        cancelButton.frame = cancelButtonFrame
+        cancelButton.layer.cornerRadius = 21
+        cancelButton.backgroundColor = UIColor.white
+        cancelButton.setTitle("Cancel", for: .normal)
+        cancelButton.setTitleColor(UIColor(red: 140/255, green:  219/255, blue: 251/255, alpha: 1), for: .normal)
         cancelButton.contentMode = .scaleAspectFit
         cancelButton.addTarget(self, action: #selector(dismissVC), for:.touchUpInside)
         view.addSubview(cancelButton)
-        
-        //ImageButton
-        
-        let galleryButton = UIButton()
-        if let galleryImage = galleryImage{
-            galleryButton.frame = CGRect(x: view.frame.width - (width+16), y: 16, width: width, height: height)
-            galleryButton.setImage(galleryImage, for: .normal)
-        }else{
-            galleryButton.frame = CGRect(x: view.frame.width - (width+14), y: view.frame.height - height, width: btnWidthWhenGalleyImageNil, height: height)
-            galleryButton.setTitle("Gallery", for: .normal)
-        }
-        galleryButton.contentMode = .scaleAspectFit
-        galleryButton.addTarget(self, action: #selector(presentGalley), for: .touchUpInside)
-        view.addSubview(galleryButton)
-        
-        //iphone Image
-        let phoneImageView = UIImageView(image: iphoneIcon)
-        phoneImageView.frame = CGRect.init(origin: CGPoint(x: self.view.frame.midX - (self.view.frame.width/2.5), y: (topSpace+10)), size: CGSize(width: (self.view.frame.width * 0.16), height: (self.view.frame.height * 0.14)))
-        view.addSubview(phoneImageView)
-        
-        UIView.animate(withDuration: 1, delay: 0.5, options: [.autoreverse,.repeat], animations: {
-            phoneImageView.frame = CGRect.init(origin: CGPoint(x: self.view.frame.midX - (self.view.frame.width/7), y: (self.topSpace+10)), size: CGSize(width: self.view.frame.width * 0.16, height: self.view.frame.height * 0.14))
-            
-        }) { (success) in
-            
-        }
-       
-        
-        //QRCode image
-        let qrCodeImageView = UIImageView(image: qrcodeIcon)
-        qrCodeImageView.frame = CGRect(origin: CGPoint(x: self.view.frame.midX - (self.view.frame.width/7), y: (topSpace*1.5)), size: CGSize(width: self.view.frame.width * 0.14, height: (self.view.frame.height * 0.08)))
-        view.addSubview(qrCodeImageView)
-        
-        
-        
-        //Torch button
-        flashButton = UIButton(frame: CGRect(x: 16, y: 16, width: width, height: height))
-        flashButton.tintColor = UIColor.white
-        flashButton.layer.cornerRadius = height/2
-        flashButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-        flashButton.contentMode = .scaleAspectFit
-        flashButton.addTarget(self, action: #selector(toggleTorch), for: .touchUpInside)
-        if let flashOffImg = flashOffImage {
-            flashButton.setImage(flashOffImg, for: .normal)
-            view.addSubview(flashButton)
-        }
-        
-        //Camera button
-//        let cameraButton = UIButton(frame: CGRect(x: self.view.bounds.width - (width + 16), y: self.view.bounds.size.height - (bottomSpace + height + 10), width: width, height: height))
-//        cameraButton.addTarget(self, action: #selector(switchCamera), for: .touchUpInside)
-//        cameraButton.layer.cornerRadius = height/2
-//        cameraButton.backgroundColor = UIColor.black.withAlphaComponent(0.5)
-//        cameraButton.contentMode = .scaleAspectFit
-//        if let cameraImg = cameraImage {
-//            cameraButton.setImage(cameraImg, for: .normal)
-//            view.addSubview(cameraButton)
-//        }
     }
     
-    //Select Image
     
+    //MARK:- button actions
+    
+    //Select Image
     @objc func presentGalley(){
         imagePicker.sourceType = .photoLibrary
         imagePicker.allowsEditing = false
@@ -347,6 +395,16 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
         self.dismiss(animated: true, completion: nil)
         delegate?.qrScannerDidCancel(self)
     }
+    @objc func VelidateQRcode(){
+        if let qrcode = qrCodeTextField.text, !qrcode.isEmpty{
+            print("QRCode textfield")
+            delegate?.qrCodeFromTextField(_controller: self, scanDidcomplete: qrcode)
+        }else{
+           //error
+                
+            }
+        }
+ 
     
     //MARK: - Setup and start capturing session
     
@@ -398,25 +456,27 @@ class QRcodeScannerController: UIViewController,AVCaptureMetadataOutputObjectsDe
     
     ///Inserts layer to view
     private func addViedoPreviewLayer(_ view: UIView) {
-        videoPreviewLayer.frame = CGRect(x:view.bounds.origin.x, y: view.bounds.origin.y, width: view.bounds.size.width, height: view.bounds.size.height - topSpace)
+        if #available(iOS 11.0, *) {
+            videoPreviewLayer.frame = CGRect(x:view.bounds.origin.x, y: view.bounds.origin.y, width: view.bounds.size.width, height: view.bounds.size.height)
+        } else {
+            videoPreviewLayer.frame = CGRect(x:view.bounds.origin.x, y: view.bounds.origin.y, width: view.bounds.size.width, height: view.bounds.size.height)
+        }
         view.layer.insertSublayer(videoPreviewLayer, at: 0)
+        print("View is added first time)")
     }
     var isCompleteAnimation = true
     
     //Adding QRcode scanning indicator
     
-    func qrCodeScanningIndicator(){
+    func qrCodeScanningIndicator(rect:CGRect){
         
-        let width: CGFloat =  self.view.bounds.width
-        let height: CGFloat = self.view.bounds.height
-        movingView.frame = CGRect.init(origin: CGPoint.init(x: self.view.frame.midX - width/2.5 , y: (self.view.frame.midY - height / 5)), size: CGSize.init(width: width * 0.8, height: 5))
+        
+        movingView.frame = CGRect.init(origin: CGPoint.init(x: rect.origin.x , y: rect.origin.y), size: CGSize.init(width: rect.width, height: 5))
         
         UIView.animate(withDuration: 0.8, delay: 0.0, options: [.autoreverse, .repeat], animations: {
             if self.isCompleteAnimation{
                 self.isCompleteAnimation = false
-                print("Frame is 1 : \(self.movingView.frame)")
-                self.movingView.frame = CGRect.init(origin: CGPoint.init(x: self.view.frame.midX - width/2.5 , y: ((self.view.frame.midY - height / 5) + (width * 0.8))), size: CGSize.init(width: width * 0.8, height: 5))
-                print("Frame is 2: \(self.movingView.frame)")
+                self.movingView.frame = CGRect.init(origin: CGPoint.init(x: rect.origin.x , y: rect.origin.y+rect.height), size: CGSize.init(width: rect.width, height: 5))
             }
         }) { (success) in
             self.isCompleteAnimation = true
@@ -463,7 +523,14 @@ extension QRcodeScannerController {
         return UIInterfaceOrientation.portrait
     }
 }
-
+extension QRcodeScannerController: UITextFieldDelegate{
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.view.endEditing(true)
+        return false
+    }
     
+}
+
+
 
 

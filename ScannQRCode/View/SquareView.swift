@@ -1,3 +1,4 @@
+
 //
 //  SquareView.swift
 //  ScannQRCode
@@ -84,7 +85,7 @@ class SquareView: UIView {
         super.draw(rect)
         self.drawCorners()
     }
-
+    
     
     
 }

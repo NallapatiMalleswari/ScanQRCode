@@ -17,6 +17,7 @@
 		542E21EF20EF867200EC93CB /* ScannQRCodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542E21EE20EF867200EC93CB /* ScannQRCodeTests.swift */; };
 		542E21FA20EF867200EC93CB /* ScannQRCodeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542E21F920EF867200EC93CB /* ScannQRCodeUITests.swift */; };
 		542E220820EF86A500EC93CB /* QRcodeScannerController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 542E220720EF86A500EC93CB /* QRcodeScannerController.swift */; };
+		5487774E2122EAD50050FC1D /* ViewUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5487774D2122EAD50050FC1D /* ViewUtils.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +54,7 @@
 		542E21F920EF867200EC93CB /* ScannQRCodeUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScannQRCodeUITests.swift; sourceTree = "<group>"; };
 		542E21FB20EF867200EC93CB /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		542E220720EF86A500EC93CB /* QRcodeScannerController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QRcodeScannerController.swift; sourceTree = "<group>"; };
+		5487774D2122EAD50050FC1D /* ViewUtils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ViewUtils.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -114,6 +116,7 @@
 				542E21D920EF867100EC93CB /* AppDelegate.swift */,
 				542E21DB20EF867100EC93CB /* ViewController.swift */,
 				542E220720EF86A500EC93CB /* QRcodeScannerController.swift */,
+				5487774D2122EAD50050FC1D /* ViewUtils.swift */,
 				5424CB3620F61B5600A9F51E /* SelectQRcodeFromGallery.swift */,
 				5424CB3820F61C7C00A9F51E /* View */,
 				542E21DD20EF867100EC93CB /* Main.storyboard */,
@@ -275,6 +278,7 @@
 			files = (
 				542E220820EF86A500EC93CB /* QRcodeScannerController.swift in Sources */,
 				5424CB3A20F61CA800A9F51E /* SquareView.swift in Sources */,
+				5487774E2122EAD50050FC1D /* ViewUtils.swift in Sources */,
 				542E21DC20EF867100EC93CB /* ViewController.swift in Sources */,
 				5424CB3720F61B5600A9F51E /* SelectQRcodeFromGallery.swift in Sources */,
 				542E21DA20EF867100EC93CB /* AppDelegate.swift in Sources */,

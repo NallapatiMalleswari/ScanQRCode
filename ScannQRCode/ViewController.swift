@@ -32,8 +32,14 @@ class ViewController: UIViewController {
 }
 
 extension ViewController: QRScannerDelegate {
+    func qrCodeFromTextField(_controller: UIViewController, scanDidcomplete result: String) {
+        print("result:\(result)")
+        self.dismiss(animated: true, completion: nil)
+    }
+    
     func qrScanner(_ controller: UIViewController, scanDidComplete result: String) {
         print("result:\(result)")
+        
     }
     
     func qrScannerDidFail(_ controller: UIViewController, error: String) {
@@ -45,6 +51,7 @@ extension ViewController: QRScannerDelegate {
     }
     func qrScannerFromGalley(_controller: UIViewController, scanDidcomplete result: String) {
         print("result OF scanning: \(result)")
+        self.dismiss(animated: true, completion: nil)
     }
 }
 
